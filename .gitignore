@@ -5,3 +5,4 @@
 # QA artifacts kept local (debug evidence, not part of the deliverable).
 # Delete this line to start tracking them.
 qa/
+.vercel
