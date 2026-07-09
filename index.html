@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Optics Lab · 프리즘 굴절과 분산 시뮬레이터</title>
+<style>
+  :root{
+    --bg-0:#04060c;
+    --bg-1:#0a1020;
+    --ink:#e9eef9;
+    --ink-dim:#8a93ad;
+    --ink-faint:#4f586f;
+    --accent:#7dd5ff;
+    --accent-2:#ffb86b;
+    --panel:rgba(10,14,24,.78);
+    --panel-bd:rgba(125,213,255,.16);
+    --shadow:0 12px 36px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.45);
+    --gap:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    color:var(--ink);
+    font:14px/1.45 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    background:
+      radial-gradient(1200px 700px at 28% 10%, rgba(64,90,140,.18), transparent 60%),
+      radial-gradient(900px 600px at 90% 95%, rgba(255,140,80,.08), transparent 60%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    overflow:hidden;
+  }
+  header{
+    position:fixed; top:14px; left:14px; right:14px;
+    display:flex; align-items:center; gap:14px;
+    pointer-events:none;
+    z-index:10;
+  }
+  header .brand{
+    pointer-events:auto;
+    padding:9px 14px;
+    background:var(--panel);
+    border:1px solid var(--panel-bd);
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:10px;
+    backdrop-filter: blur(8px);
+  }
+  header .brand .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff, var(--accent) 60%, transparent 70%);
+    box-shadow:0 0 14px var(--accent);
+  }
+  header h1{
+    margin:0;
+    font-size:13px; font-weight:600; letter-spacing:.04em;
+    color:#cfdbf3;
+  }
+  header h1 span{ color:var(--ink-faint); font-weight:500; }
+  header .stats{
+    pointer-events:auto;
+    margin-left:auto;
+    display:flex; gap:8px;
+  }
+  .chip{
+    background:var(--panel);
+    border:1px solid var(--panel-bd);
+    border-radius:10px;
+    padding:6px 10px;
+    font-size:12px;
+    color:var(--ink-dim);
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(8px);
+    white-space:nowrap;
+  }
+  .chip b{ color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+  .chip.alert b{ color:#ffb86b }
+
+  main{
+    position:fixed; inset:0;
+    display:grid;
+    grid-template-columns: 1fr 320px;
+  }
+  .stage{ position:relative; min-width:0; }
+  canvas{ display:block; width:100%; height:100%; }
+  .stage .legend{
+    position:absolute; bottom:14px; left:14px;
+    background:var(--panel); border:1px solid var(--panel-bd);
+    border-radius:10px; padding:8px 12px;
+    font-size:11px; color:var(--ink-dim);
+    backdrop-filter: blur(8px);
+    box-shadow:var(--shadow);
+    max-width: 460px;
+    line-height:1.5;
+  }
+  .stage .legend kbd{
+    display:inline-block; padding:1px 6px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:5px; font-size:10px;
+    color:var(--ink);
+  }
+
+  aside.panel{
+    margin:14px 14px 14px 0;
+    background:var(--panel);
+    border:1px solid var(--panel-bd);
+    border-radius:14px;
+    padding:16px 16px 12px;
+    overflow:auto;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+  aside.panel h2{
+    margin:0 0 4px;
+    font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent);
+  }
+  aside.panel p.sub{
+    margin:0 0 14px;
+    color:var(--ink-faint);
+    font-size:12px;
+  }
+  .control{ margin-bottom:14px; }
+  .control label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12px; color:var(--ink-dim);
+    margin-bottom:6px;
+  }
+  .control label .val{
+    color:var(--ink);
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+    background:rgba(125,213,255,.08);
+    border:1px solid rgba(125,213,255,.18);
+    padding:1px 7px;
+    border-radius:6px;
+    font-size:11px;
+  }
+  .control input[type=range]{
+    width:100%;
+    -webkit-appearance:none; appearance:none;
+    background:transparent;
+  }
+  .control input[type=range]::-webkit-slider-runnable-track{
+    height:5px; border-radius:5px;
+    background: linear-gradient(90deg, rgba(125,213,255,.35), rgba(255,184,107,.35));
+  }
+  .control input[type=range]::-moz-range-track{
+    height:5px; border-radius:5px;
+    background: linear-gradient(90deg, rgba(125,213,255,.35), rgba(255,184,107,.35));
+  }
+  .control input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:16px; height:16px; border-radius:50%;
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(125,213,255,.2), 0 0 12px rgba(125,213,255,.5);
+    cursor:pointer;
+    margin-top:-6px;
+  }
+  .control input[type=range]::-moz-range-thumb{
+    width:16px; height:16px; border-radius:50%; border:none;
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(125,213,255,.2), 0 0 12px rgba(125,213,255,.5);
+  }
+
+  .row{ display:flex; gap:8px; }
+  .btn{
+    flex:1;
+    padding:8px 10px;
+    background:rgba(125,213,255,.08);
+    border:1px solid rgba(125,213,255,.22);
+    color:var(--ink);
+    border-radius:8px;
+    font-size:12px;
+    cursor:pointer;
+    transition: background .15s, transform .05s;
+  }
+  .btn:hover{ background:rgba(125,213,255,.16) }
+  .btn:active{ transform:translateY(1px) }
+  .btn.on{ background:rgba(255,184,107,.16); border-color:rgba(255,184,107,.4); color:#ffd7a5 }
+  .btn.warn{ background:rgba(255,184,107,.08); border-color:rgba(255,184,107,.3); }
+
+  .seg{
+    display:flex; gap:0; border-radius:8px; overflow:hidden;
+    border:1px solid rgba(125,213,255,.22);
+  }
+  .seg button{
+    flex:1; padding:7px 6px;
+    background:rgba(125,213,255,.04);
+    color:var(--ink-dim);
+    border:none; cursor:pointer;
+    font-size:11px;
+  }
+  .seg button.on{ background:rgba(125,213,255,.18); color:#fff; }
+
+  footer.foot{
+    margin-top:6px;
+    padding-top:12px;
+    border-top:1px dashed rgba(125,213,255,.15);
+    font-size:11px; color:var(--ink-faint);
+    line-height:1.55;
+  }
+  footer.foot b{ color:var(--ink-dim); font-weight:600 }
+
+  /* responsive */
+  @media (max-width: 860px){
+    main{ grid-template-columns: 1fr; }
+    aside.panel{
+      margin:0; border-radius:14px 14px 0 0;
+      max-height: 45vh;
+    }
+    .stage{ height:55vh }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Optics Lab <span>· Snell's law · 2D ray tracing</span></h1>
+  </div>
+  <div class="stats" id="hud">
+    <div class="chip" title="입사각 (1면)">θ<sub>in</sub> <b id="hud-in">—</b></div>
+    <div class="chip" title="1면 굴절각">θ<sub>r₁</sub> <b id="hud-r1">—</b></div>
+    <div class="chip" title="2면 입사각">θ<sub>i₂</sub> <b id="hud-i2">—</b></div>
+    <div class="chip" title="2면 굴절각">θ<sub>r₂</sub> <b id="hud-r2">—</b></div>
+    <div class="chip alert" title="편각">Δ <b id="hud-dev">—</b></div>
+    <div class="chip" title="분산 폭">δ <b id="hud-disp">—</b></div>
+  </div>
+</header>
+
+<main>
+  <section class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+    <div class="legend">
+      <b style="color:var(--ink)">조작</b> ·
+      슬라이더로 <b style="color:var(--ink)">입사각 · 굴절률 · 정점각 · 회전 · 분산</b> 조절.
+      프리즘 위를 마우스로 드래그하여 위치를 옮길 수 있습니다.
+      <br>
+      <kbd>Space</kbd> 입사광 일시정지 ·
+      <kbd>R</kbd> 리셋 ·
+      <kbd>H</kbd> HUD 토글
+    </div>
+  </section>
+
+  <aside class="panel" id="panel">
+    <h2>광선 제어</h2>
+    <p class="sub">입사각과 분산을 자유롭게 조절하세요.</p>
+
+    <div class="control">
+      <label>입사각 θ<sub>in</sub> <span class="val" id="v-theta">0.0°</span></label>
+      <input id="theta" type="range" min="-45" max="60" step="0.1" value="0">
+    </div>
+    <div class="control">
+      <label>굴절률 n (재질) <span class="val" id="v-iorname">크라운 글래스 · 1.52</span></label>
+      <input id="ior" type="range" min="100" max="250" step="1" value="145">
+    </div>
+    <div class="control">
+      <label>정점각 (Apex) <span class="val" id="v-apex">60.0°</span></label>
+      <input id="apex" type="range" min="20" max="120" step="0.5" value="60">
+    </div>
+    <div class="control">
+      <label>분산 강도 <span class="val" id="v-disp">1.00×</span></label>
+      <input id="disp" type="range" min="0" max="300" step="1" value="150">
+    </div>
+    <div class="control">
+      <label>프리즘 회전 <span class="val" id="v-rot">0.0°</span></label>
+      <input id="rot" type="range" min="-180" max="180" step="0.5" value="0">
+    </div>
+    <div class="control">
+      <label>프리즘 크기 <span class="val" id="v-scale">1.00×</span></label>
+      <input id="scale" type="range" min="50" max="200" step="1" value="100">
+    </div>
+
+    <div class="control">
+      <label>프리즘 종류</label>
+      <div class="seg" id="prism-modes">
+        <button class="on" data-mode="equi">정삼각형</button>
+        <button data-mode="custom">사용자 각도</button>
+      </div>
+    </div>
+
+    <div class="control">
+      <label>광선 표시</label>
+      <div class="seg" id="ray-modes">
+        <button class="on" data-mode="rainbow">무지개 (7)</button>
+        <button data-mode="rgb">RGB 3색</button>
+        <button data-mode="white">단일 백색</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn" id="btn-pause">⏸ 일시정지</button>
+      <button class="btn warn" id="btn-reset">↺ 기본값</button>
+    </div>
+
+    <footer class="foot">
+      <b>스넬의 법칙</b> &nbsp; n₁ sin θ₁ = n₂ sin θ₂<br>
+      <b>분산</b> &nbsp; Cauchy 근사: n(λ) = A + B/λ²<br>
+      <b>전반사(TIR)</b> &nbsp; 내부에서 sin θᵢ &gt; n₂/n₁ 일 때 발생
+    </footer>
+  </aside>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+// =============================================================
+//  CONFIG · DEFAULTS
+// =============================================================
+const DEFAULTS = Object.freeze({
+  thetaDeg: 0,           // perpendicular entry — maximum dispersion
+  ior_x100: 145,         // 1.45 — acrylic / light flint
+  apexDeg: 60,
+  disp_x100: 150,        // 1.5× for clearly visible rainbow fan
+  rotationDeg: 0,
+  scale_x100: 100,
+  prismMode: 'equi',     // 'equi' | 'custom'
+  rayMode: 'rainbow',    // 'rainbow' | 'rgb' | 'white'
+  paused: false,
+});
+
+// 7-band rainbow wavelengths (nm). Wavelength itself only matters for ordering.
+// Values used here only to give distinct wavelengths for the dispersion model.
+const WAVELENGTHS = [
+  { name:'Violet',   nm:380, color:'#a17cff' },
+  { name:'Indigo',   nm:440, color:'#5b8cff' },
+  { name:'Blue',     nm:490, color:'#3ec0ff' },
+  { name:'Green',    nm:540, color:'#5dff8a' },
+  { name:'Yellow',   nm:580, color:'#ffe25a' },
+  { name:'Orange',   nm:610, color:'#ffa658' },
+  { name:'Red',      nm:660, color:'#ff5d6c' },
+];
+
+// Pre-computed Cauchy weights: increases with shorter wavelength.
+// Strength scales dispersion slider (disp_x100/100).
+// We deliberately exaggerate dispersion (base Δn ≈ 0.18 at dispStrength=1.0)
+// compared to real glass (0.01–0.05) so the rainbow fan is obvious in dark mode.
+function iorForWavelength(baseN, dispStrength, nm){
+  const ref = 660;             // reference wavelength — red is the slowest (smallest n)
+  const refSq = ref*ref;
+  const delta = (refSq/(nm*nm) - 1);   // positive, increasing as nm decreases
+  const norm = delta / 2.015;          // 0..1 (max at 380nm)
+  const MAX_SPREAD = 0.12;             // exaggerated (~4× real glass) so the rainbow is unmistakable
+  return baseN + MAX_SPREAD * dispStrength * norm;
+}
+
+// Material preset name (purely cosmetic, for slider value label).
+function iorPresetName(n){
+  const presets = [
+    [1.30, '얼음'], [1.33, '물'], [1.45, '아크릴'],
+    [1.52, '크라운 글래스'], [1.62, '조밀 플린트'], [1.74, '고굴절 유리'],
+    [2.42, '다이아몬드'],
+  ];
+  let best = presets[0];
+  for (const p of presets) if (Math.abs(p[0] - n) < Math.abs(best[0] - n)) best = p;
+  return `${best[1]} · ${n.toFixed(2)}`;
+}
+
+// =============================================================
+//  MATH · VECTORS, LINES, INTERSECTIONS, REFRACTION
+// =============================================================
+const V = {
+  make: (x, y) => ({ x, y }),
+  add:  (a, b) => ({ x: a.x + b.x, y: a.y + b.y }),
+  sub:  (a, b) => ({ x: a.x - b.x, y: a.y - b.y }),
+  scl:  (a, k) => ({ x: a.x * k,    y: a.y * k    }),
+  dot:  (a, b) => a.x * b.x + a.y * b.y,
+  len:  (a) => Math.hypot(a.x, a.y),
+  norm: (a) => { const L = Math.hypot(a.x, a.y) || 1; return { x: a.x/L, y: a.y/L }; },
+  // Rotate by 'rad' radians.
+  rot:  (a, rad) => {
+    const c = Math.cos(rad), s = Math.sin(rad);
+    return { x: a.x * c - a.y * s, y: a.x * s + a.y * c };
+  },
+};
+
+// Line–line segment intersection (2D). Returns t in [0..1] along ray (origin→dir).
+// Uses parametric ray P = O + t·D, with t>0 in front of origin.
+function intersectRaySegment(origin, dir, A, B){
+  // Solve  O + t·D = A + u·(B-A),  0 < t, 0 < u < 1.
+  const r = dir;
+  const s = { x: B.x - A.x, y: B.y - A.y };
+  const denom = r.x * (-s.y) - r.y * (-s.x); // = cross(r, s)
+  // Robust parallel check.
+  const EPS = 1e-9;
+  if (Math.abs(denom) < EPS) return null;
+  const diff = { x: A.x - origin.x, y: A.y - origin.y };
+  // cross(diff, s) / denom -> t
+  const t = (diff.x * (-s.y) - diff.y * (-s.x)) / denom;
+  const u = (diff.x * r.y - diff.y * r.x) / denom;  // NOT used here, kept for clarity
+  // Inverse formulation to avoid sign mistakes:
+  // t = ((A - O) × s) / (r × s)
+  // u = ((A - O) × r) / (r × s)
+  const Ax = A.x - origin.x, Ay = A.y - origin.y;
+  const denom2 = r.x * s.y - r.y * s.x;
+  if (Math.abs(denom2) < EPS) return null;
+  const t2 = (Ax * s.y - Ay * s.x) / denom2;
+  const u2 = (Ax * r.y - Ay * r.x) / denom2;
+  if (t2 <= 1e-6 || u2 < -1e-4 || u2 > 1 + 1e-4) return null;
+  return { t: t2, u: u2, point: { x: origin.x + t2 * r.x, y: origin.y + t2 * r.y } };
+}
+
+// Outward normal of edge A→B. The prism keeps the centroid on a consistent side;
+// we always return the normal that points AWAY from the centroid.
+function edgeNormal(A, B, centroid){
+  const ex = B.x - A.x, ey = B.y - A.y;
+  // Vector from A toward the centroid (= inward direction).
+  const inwardX = centroid.x - A.x, inwardY = centroid.y - A.y;
+  const cands = [
+    { x: -ey, y:  ex },   // rotate edge 90° CCW
+    { x:  ey, y: -ex },   // rotate edge 90° CW
+  ];
+  // Outward normal = the one whose dot with (A→centroid) is NEGATIVE.
+  let best = cands[0];
+  let bestDot = Infinity;
+  for (const n of cands){
+    const d = n.x * inwardX + n.y * inwardY;
+    if (d < bestDot){ bestDot = d; best = n; }
+  }
+  return V.norm(best);
+}
+
+// Snell's refraction. Incident D and surface normal N (unit, pointing into
+// the medium the incident ray comes FROM — i.e. opposite to surface outward).
+// n1, n2 are IORs of the incident/transmitted media. Returns transmitted direction
+// (unit), or null if TIR.
+function refract(incidentDir, normal, n1, n2){
+  // We always want cosI > 0 in the formula. If cosI < 0 (ray approaching
+  // from outside, since N is outward), just take its magnitude. If cosI > 0
+  // (ray exiting through this surface), flip N and swap media roles so the
+  // formula treats the geometry as an entry.
+  let N = normal;
+  let I = incidentDir;
+  let cosI = I.x * N.x + I.y * N.y;
+  if (cosI > 0){
+    N = { x: -N.x, y: -N.y };
+    [n1, n2] = [n2, n1];
+  }
+  // Always use the magnitude of cosI in the formula (since the angle of
+  // incidence is taken as the acute angle between ray and normal).
+  const absCosI = Math.abs(cosI);
+  const eta = n1 / n2;
+  const sinT2 = eta * eta * (1 - absCosI * absCosI);
+  if (sinT2 > 1.0000001){
+    return { tir: true };
+  }
+  const cosT = Math.sqrt(Math.max(0, 1 - sinT2));
+  // T = eta * I + (eta*cosI - cosT) * N
+  const k = eta * absCosI - cosT;
+  const T = {
+    x: eta * I.x + k * N.x,
+    y: eta * I.y + k * N.y,
+  };
+  return { tir: false, dir: V.norm(T) };
+}
+
+// Reflection of a ray about a unit normal (same-side convention as above).
+function reflect(incidentDir, normal){
+  let N = normal;
+  let I = incidentDir;
+  let cosI = I.x * N.x + I.y * N.y;
+  if (cosI > 0) N = { x: -N.x, y: -N.y }; // ensure normal opposes incidence
+  cosI = Math.abs(cosI);
+  // R = I - 2 (I · N) N
+  const dot = I.x * N.x + I.y * N.y;
+  return V.norm({
+    x: I.x - 2 * dot * N.x,
+    y: I.y - 2 * dot * N.y,
+  });
+}
+
+// =============================================================
+//  PRISM GEOMETRY
+//  Triangle with given apex angle, scale, rotation. The apex is the top vertex.
+// =============================================================
+function buildPrism(apexDeg, scale, rotation, mode){
+  // Isoceles triangle with apex at top, two equal sides of length S.
+  // Apex angle = apexDeg (in degrees).
+  void mode;
+  const S = 200 * (scale / 100);
+  const apexRad = (apexDeg * Math.PI) / 180;
+  const halfA   = apexRad / 2;
+
+  // Construct the triangle with apex at origin (0,0).
+  //   Apex = (0, 0)
+  //   Left  base corner = S * (-sin(halfA),  cos(halfA))  → down and left
+  //   Right base corner = S * ( sin(halfA),  cos(halfA))  → down and right
+  // (Screen coords: +y is downward, so cos(halfA) > 0 means below apex.)
+  const apexLocal       = { x: 0, y: 0 };
+  const leftBottomLocal = { x: -S * Math.sin(halfA), y: S * Math.cos(halfA) };
+  const rightBottomLocal= { x:  S * Math.sin(halfA), y: S * Math.cos(halfA) };
+
+  // Translate so centroid is at the origin.
+  const cyOffset = (2 / 3) * leftBottomLocal.y;
+  // After this translate the centroid sits at the origin.
+  const vertsLocal = [
+    { x: apexLocal.x,        y: apexLocal.y - cyOffset },
+    { x: leftBottomLocal.x,  y: leftBottomLocal.y - cyOffset },
+    { x: rightBottomLocal.x, y: rightBottomLocal.y - cyOffset },
+  ];
+  // Apply user rotation around centroid (origin).
+  const verts = vertsLocal.map(v => V.rot(v, rotation));
+
+  const orderedEdges = [
+    { A: verts[1], B: verts[0], name: 'left'  },
+    { A: verts[0], B: verts[2], name: 'right' },
+    { A: verts[1], B: verts[2], name: 'bottom'},
+  ];
+
+  return {
+    verts, // [apex, leftBottom, rightBottom]
+    centroid: { x: 0, y: 0 },
+    edges: orderedEdges,
+    halfBase: S * Math.sin(halfA),
+    sideLength: S,
+    apexDeg,
+  };
+}
+
+// =============================================================
+//  STATE
+// =============================================================
+const state = {
+  ...DEFAULTS,
+};
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let dpr = Math.max(1, window.devicePixelRatio || 1);
+let W = 0, H = 0;
+let cssW = 0, cssH = 0;
+
+function resize(){
+  const stage = document.getElementById('stage');
+  const r = stage.getBoundingClientRect();
+  cssW = r.width; cssH = r.height;
+  W = Math.floor(cssW * dpr);
+  H = Math.floor(cssH * dpr);
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+// =============================================================
+//  PRISM DRAGGING
+// =============================================================
+const prismOffset = { x: 0, y: 0 };
+let dragging = false, dragMoved = false, dragStart = null;
+
+canvas.addEventListener('pointerdown', (e) => {
+  dragging = true; dragMoved = false;
+  dragStart = { x: e.clientX, y: e.clientY, ox: prismOffset.x, oy: prismOffset.y };
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+  if (Math.hypot(dx, dy) > 3) dragMoved = true;
+  prismOffset.x = dragStart.ox + dx;
+  prismOffset.y = dragStart.oy + dy;
+});
+canvas.addEventListener('pointerup', (e) => {
+  dragging = false;
+  try { canvas.releasePointerCapture(e.pointerId); } catch {}
+});
+
+// =============================================================
+//  CONTROLS BINDING
+// =============================================================
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function updateLabels(){
+  const ior = state.ior_x100 / 100;
+  $('#v-theta').textContent = `${state.thetaDeg.toFixed(1)}°`;
+  $('#v-iorname').textContent = iorPresetName(ior);
+  $('#v-apex').textContent   = `${state.apexDeg.toFixed(1)}°`;
+  $('#v-disp').textContent  = `${(state.disp_x100/100).toFixed(2)}×`;
+  $('#v-rot').textContent   = `${state.rotationDeg.toFixed(1)}°`;
+  $('#v-scale').textContent = `${(state.scale_x100/100).toFixed(2)}×`;
+}
+
+function bindRange(id, key, transform = (v) => v){
+  const el = $(id);
+  el.addEventListener('input', () => {
+    state[key] = transform(parseFloat(el.value));
+    updateLabels();
+  });
+}
+bindRange('#theta', 'thetaDeg');
+bindRange('#apex',  'apexDeg');
+bindRange('#disp',  'disp_x100');
+bindRange('#rot',   'rotationDeg');
+bindRange('#scale', 'scale_x100');
+$('#ior').addEventListener('input', (e) => {
+  state.ior_x100 = parseFloat(e.target.value);
+  updateLabels();
+});
+
+$$('#prism-modes button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#prism-modes button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    state.prismMode = btn.dataset.mode;
+    if (state.prismMode === 'equi'){
+      state.apexDeg = 60;
+      $('#apex').value = 60;
+      $('#apex').disabled = true;
+    } else {
+      $('#apex').disabled = false;
+    }
+    updateLabels();
+  });
+});
+$$('#ray-modes button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('#ray-modes button').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    state.rayMode = btn.dataset.mode;
+  });
+});
+
+$('#btn-pause').addEventListener('click', () => {
+  state.paused = !state.paused;
+  $('#btn-pause').textContent = state.paused ? '▶ 다시 시작' : '⏸ 일시정지';
+  // Resume: explicitly kick the animation loop since frame() only schedules
+  // its own rAF when !state.paused (so the chain breaks at un-pause).
+  if (!state.paused) requestAnimationFrame(frame);
+});
+$('#btn-reset').addEventListener('click', () => {
+  Object.assign(state, DEFAULTS);
+  $('#theta').value = DEFAULTS.thetaDeg;
+  $('#ior').value   = DEFAULTS.ior_x100;
+  $('#apex').value  = DEFAULTS.apexDeg;
+  $('#disp').value  = DEFAULTS.disp_x100;
+  $('#rot').value   = DEFAULTS.rotationDeg;
+  $('#scale').value = DEFAULTS.scale_x100;
+  $('#apex').disabled = (state.prismMode === 'equi');
+  $$('#prism-modes button').forEach(b => b.classList.toggle('on', b.dataset.mode === DEFAULTS.prismMode));
+  $$('#ray-modes button').forEach(b => b.classList.toggle('on', b.dataset.mode === DEFAULTS.rayMode));
+  state.paused = false;
+  $('#btn-pause').textContent = '⏸ 일시정지';
+  prismOffset.x = 0; prismOffset.y = 0;
+  updateLabels();
+  // Defensive: rAF might not be scheduled if the user resets after pausing.
+  requestAnimationFrame(frame);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space'){ e.preventDefault(); $('#btn-pause').click(); }
+  else if (e.key === 'r' || e.key === 'R'){ $('#btn-reset').click(); }
+  else if (e.key === 'h' || e.key === 'H'){
+    document.querySelector('header .stats').style.display =
+      document.querySelector('header .stats').style.display === 'none' ? '' : 'none';
+  }
+});
+
+// =============================================================
+//  RAY CASTING
+// =============================================================
+// Find the next prism edge hit. Returns { edgeIdx, hit } or null.
+function castRay(origin, dir, prism, maxT){
+  let best = null;
+  for (let i = 0; i < prism.edges.length; i++){
+    const e = prism.edges[i];
+    const r = intersectRaySegment(origin, dir, e.A, e.B);
+    if (!r) continue;
+    if (r.t > maxT) continue;
+    // Reject hits "behind" the origin (defensive)
+    if (!best || r.t < best.t) best = { edgeIdx: i, hit: r };
+  }
+  return best;
+}
+
+// Compute the incident ray.
+// The beam is anchored to the upper-left of the stage and aimed at a fixed
+// "target" point on the prism's left face. θ from the slider tilts the
+// direction around the reference aim — positive θ tilts DOWN (clockwise),
+// negative θ tilts UP (counter-clockwise).
+//
+// To guarantee the ray hits the prism regardless of geometry, the function
+// validates the chosen origin/direction and, if the ray would miss, snaps the
+// origin onto a circle of constant distance around the target — preserving the
+// θ-rotation semantics but always producing a hit on the prism.
+// Compute the incident ray.
+//
+// θ_user is interpreted as the angle of INCIDENCE on the left face, measured
+// from the surface normal at the entry point. θ_user = 0 means perpendicular
+// to the left face; positive values tilt the beam clockwise (more downward in
+// screen coords). The ray's origin is computed so it always reaches the entry
+// point, regardless of θ.
+function makeIncidentRay(prism, thetaUserDeg){
+  const A = prism.verts[0];   // apex
+  const B = prism.verts[1];   // left bottom
+  const target = {
+    x: (A.x + B.x) / 2,
+    y: (A.y + B.y) / 2,
+  };
+
+  // Outward normal of the left face; -N is the INWARD direction (into prism).
+  const Nout = edgeNormal(B, A, prism.centroid);
+  const inwardAngle = Math.atan2(-Nout.y, -Nout.x);
+
+  // Direction at θ_user = 0 = inward normal (perpendicular entry).
+  // θ_user rotates this direction clockwise (in screen coords this increases
+  // the downward component of y).
+  const angleRad = inwardAngle + (thetaUserDeg * Math.PI / 180);
+  const dir = { x: Math.cos(angleRad), y: Math.sin(angleRad) };
+
+  // Anchor the origin on a circle of fixed distance around the entry target,
+  // so the ray ALWAYS reaches the entry point regardless of geometry.
+  const distance = 600;
+  const origin = {
+    x: target.x - dir.x * distance,
+    y: target.y - dir.y * distance,
+  };
+  return { origin, dir, target };
+}
+
+// Direction vector from angle (degrees, screen coordinates).
+function dirFromAngleDeg(deg){
+  const r = (deg * Math.PI) / 180;
+  return { x: Math.cos(r), y: Math.sin(r) };
+}
+
+// =============================================================
+//  SCENE RENDER
+// =============================================================
+function drawBackground(){
+  // Soft starfield-like radial gradient backdrop.
+  const g = ctx.createRadialGradient(W*0.55/dpr, H*0.4/dpr, 0, W*0.55/dpr, H*0.4/dpr, Math.max(W,H)/dpr*0.7);
+  g.addColorStop(0, 'rgba(18,30,60,0.55)');
+  g.addColorStop(0.55, 'rgba(8,12,24,0.25)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = '#04060c';
+  ctx.fillRect(0, 0, cssW, cssH);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cssW, cssH);
+}
+
+function drawPrism(prism){
+  const v = prism.verts;
+  ctx.save();
+  // glass fill — low alpha with subtle vertical highlight
+  ctx.beginPath();
+  ctx.moveTo(v[0].x, v[0].y);
+  ctx.lineTo(v[1].x, v[1].y);
+  ctx.lineTo(v[2].x, v[2].y);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, prism.verts[0].y, 0, prism.verts[1].y);
+  grad.addColorStop(0,   'rgba(150,200,255,0.18)');
+  grad.addColorStop(0.5, 'rgba(120,170,255,0.10)');
+  grad.addColorStop(1,   'rgba(80,120,200,0.20)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Inner bevel — second path slightly smaller, half alpha
+  ctx.strokeStyle = 'rgba(180,220,255,0.45)';
+  ctx.lineWidth = 1.4;
+  ctx.shadowColor = 'rgba(125,213,255,0.55)';
+  ctx.shadowBlur = 18;
+  ctx.stroke();
+
+  // Highlight on top edge
+  ctx.beginPath();
+  ctx.moveTo(v[0].x, v[0].y);
+  ctx.lineTo(v[1].x, v[1].y);
+  ctx.lineTo(v[2].x, v[2].y);
+  ctx.closePath();
+  ctx.lineWidth = 0.6;
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Vertex labels
+  ctx.save();
+  ctx.font = '10px ui-sans-serif';
+  ctx.fillStyle = 'rgba(170,200,240,0.65)';
+  ctx.fillText('A', v[0].x + 6, v[0].y - 4);
+  ctx.fillText('B', v[1].x - 12, v[1].y + 14);
+  ctx.fillText('C', v[2].x + 6,  v[2].y + 14);
+  ctx.restore();
+}
+
+// Draw a single colored ray segment with glow.
+function drawRaySegment(p0, p1, color, glow = 14, width = 1.4, alpha = 1, isIncident = false){
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.globalAlpha = alpha;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = glow;
+  ctx.beginPath();
+  ctx.moveTo(p0.x, p0.y);
+  ctx.lineTo(p1.x, p1.y);
+  ctx.stroke();
+  // Add a bright white inner core ONLY for the incident (pre-entry) beam —
+  // this is the only segment that physically looks "white" before dispersion;
+  // post-refraction segments keep their wavelength color so the rainbow stays
+  // distinguishable instead of saturating to white in additive blending.
+  if (isIncident){
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = Math.max(0.6, width * 0.45);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.globalAlpha = alpha * 0.7;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Cast rays for all wavelengths and gather path segments.
+// Each path = [{x,y,inside}, ...] turns (outside/inside segments).
+// (Removed dead-code duplicate — only traceWavelengthForRender is used now.)
+
+// Helper: next prism intersection (used by both the HUD tracer and the renderer).
+function intersectRayWithPrism(origin, dir, prism){
+  return castRay(origin, dir, prism, 1e6);
+}
+
+function farEdge(origin, dir, w, h){
+  // March from origin along dir until one of four canvas bounds is crossed.
+  const ts = [];
+  if (dir.x > 1e-6) ts.push((w - origin.x) / dir.x);
+  if (dir.x < -1e-6) ts.push((0 - origin.x) / dir.x);
+  if (dir.y > 1e-6) ts.push((h - origin.y) / dir.y);
+  if (dir.y < -1e-6) ts.push((0 - origin.y) / dir.y);
+  const t = Math.min(...ts.filter(t => t > 0));
+  return { x: origin.x + dir.x * t, y: origin.y + dir.y * t };
+}
+
+// Decide which set of wavelength buckets to render.
+function getRaySet(ior, dispStrength, mode){
+  if (mode === 'white') return [{
+    nm: 580, color: 'rgba(255,255,255,1)',
+  }];
+  if (mode === 'rgb') return [
+    { nm: 660, color: WAVELENGTHS[6].color },
+    { nm: 540, color: WAVELENGTHS[3].color },
+    { nm: 480, color: WAVELENGTHS[2].color },
+  ];
+  // rainbow — 7 bands
+  return WAVELENGTHS.map(w => ({ nm: w.nm, color: w.color }));
+}
+
+// =============================================================
+//  HUD UPDATE
+// =============================================================
+function setHud(id, txt){ const el = document.getElementById(id); if (el) el.textContent = txt; }
+
+function updateHud(thetaInDeg, r1Deg, i2Deg, r2Deg, devDeg, dispersionArcDeg, tir){
+  setHud('hud-in', `${thetaInDeg.toFixed(1)}°`);
+  setHud('hud-r1', Number.isFinite(r1Deg) ? `${r1Deg.toFixed(1)}°` : '—');
+  setHud('hud-i2', Number.isFinite(i2Deg)  ? `${i2Deg.toFixed(1)}°` : '—');
+  setHud('hud-r2', Number.isFinite(r2Deg)  ? `${r2Deg.toFixed(1)}°` : '—');
+  setHud('hud-dev', `${devDeg.toFixed(1)}°`);
+  setHud('hud-disp', `${dispersionArcDeg.toFixed(1)}°`);
+  document.getElementById('hud-dev').parentElement.classList.toggle('alert', tir);
+  if (tir) setHud('hud-dev', 'TIR');
+}
+
+// =============================================================
+//  FRAME
+// =============================================================
+function frame(){
+  resize();
+  drawBackground();
+
+  // Prism geometry — placed in left half of stage, draggable.
+  const cx = cssW * 0.42 + prismOffset.x;
+  const cy = cssH * 0.55 + prismOffset.y;
+
+  const prism = buildPrism(state.apexDeg, state.scale_x100, 0, state.prismMode);
+  // Translate prism to (cx, cy)
+  prism.verts    = prism.verts.map(v => V.add(v, { x: cx, y: cy }));
+  prism.edges    = prism.edges.map(e => ({ A: V.add(e.A, { x:cx, y:cy }), B: V.add(e.B, { x:cx, y:cy }), name: e.name }));
+  prism.centroid = V.add(prism.centroid, { x: cx, y: cy });
+
+  // Compute incoming ray — origin upper-left, direction aimed at left face.
+  const ray = makeIncidentRay(prism, state.thetaDeg);
+  const origin = ray.origin;
+  const dir = ray.dir;
+
+  // Draw prism first as outline
+  drawPrism(prism);
+
+  // ---- Trace each wavelength ----
+  const baseN = state.ior_x100 / 100;
+  const dispStrength = state.disp_x100 / 100;
+  const rays = getRaySet(baseN, dispStrength, state.rayMode);
+
+  // Compute refraction "anatomy" using the GREEN wavelength (520nm) so HUD
+  // values are representative.
+  let thetaIn = 0, refract1 = NaN, i2 = NaN, refract2 = NaN, dev = 0, tir = false;
+  let dispersionArc = 0;
+  let minDev = Infinity, maxDev = -Infinity;
+
+  // Track path of each wavelength to render.
+  const paths = [];
+  for (const w of rays){
+    const nGlass = iorForWavelength(baseN, dispStrength, w.nm);
+    const segs = traceWavelengthForRender(origin, dir, prism, nGlass);
+    paths.push({ color: w.color, segments: segs, nGlass });
+
+    // For HUD: compute r1, r2, deviation angles specifically for the
+    // representative (middle) wavelength.
+    if (w === rays[Math.floor(rays.length/2)]){
+      const ana = traceForHud(origin, dir, prism, nGlass);
+      thetaIn = ana.thetaIn;
+      refract1 = ana.r1;
+      i2 = ana.i2;
+      refract2 = ana.r2;
+      dev = ana.dev;
+      tir = ana.tir;
+    }
+
+    // For dispersion arc, measure the angle of outgoing segment direction.
+    const lastSeg = segs[segs.length - 1];
+    if (lastSeg){
+      const ang = Math.atan2(lastSeg.p1.y - lastSeg.p0.y, lastSeg.p1.x - lastSeg.p0.x);
+      // Compare to incident direction angle (computed in degrees).
+      // The "arc" each ray deviates from the incident direction.
+      const inc = Math.atan2(dir.y, dir.x);
+      const delta = ((ang - inc) * 180 / Math.PI);
+      if (delta < minDev) minDev = delta;
+      if (delta > maxDev) maxDev = delta;
+    }
+  }
+  if (Number.isFinite(minDev) && Number.isFinite(maxDev))
+    dispersionArc = maxDev - minDev;
+
+  // ---- Draw all ray segments (rainbow composition: lighter blend) ----
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const path of paths){
+    path.segments.forEach((s, idx) => {
+      const w = Math.hypot(s.p1.x - s.p0.x, s.p1.y - s.p0.y);
+      const a = Math.min(1, Math.max(0.25, w / 220));
+      // FIRST segment of each wavelength is the incident beam (entering the
+      // prism); subsequent segments are refracted — keep their wavelength color
+      // so the rainbow fan stays distinguishable in additive blending.
+      drawRaySegment(s.p0, s.p1, path.color, 14, 1.4, a, idx === 0);
+    });
+  }
+  ctx.restore();
+
+  // Re-draw prism outline on top so glass stays "solid"
+  drawPrism(prism);
+
+  // Update HUD
+  updateHud(thetaIn, refract1, i2, refract2, dev, dispersionArc, tir);
+
+  if (!state.paused) requestAnimationFrame(frame);
+}
+
+// Specialized tracer for HUD numbers (returns the angles we display).
+function traceForHud(origin, dir, prism, nGlass){
+  const nAir = 1.0;
+
+  // --- First surface (entry) ---
+  const r1 = intersectRayWithPrism(origin, dir, prism);
+  if (!r1){
+    return { thetaIn: NaN, r1: NaN, i2: NaN, r2: NaN, dev: 0, tir: false };
+  }
+  const edge1 = prism.edges[r1.edgeIdx];
+  const N1 = edgeNormal(edge1.A, edge1.B, prism.centroid);
+  // outward normal opposes incoming ray at the entry face → cosI > 0.
+  let cosI = -(dir.x * N1.x + dir.y * N1.y);
+  cosI = Math.max(-1, Math.min(1, cosI));
+  const thetaIn = (Math.acos(Math.abs(cosI)) * 180 / Math.PI);
+
+  const ref1 = refract(dir, N1, nAir, nGlass);
+  if (ref1.tir){
+    return { thetaIn, r1: NaN, i2: NaN, r2: NaN, dev: 0, tir: true };
+  }
+  // Refracted angle at entry (inside the glass, from outward normal):
+  const sinT1 = Math.sin(thetaIn * Math.PI / 180) / nGlass;
+  const r1Ang = (Math.asin(Math.max(-1, Math.min(1, sinT1))) * 180 / Math.PI);
+
+  // --- Second surface (exit) ---
+  const r2 = intersectRayWithPrism(r1.hit.point, ref1.dir, prism);
+  if (!r2){
+    return { thetaIn, r1: r1Ang, i2: NaN, r2: NaN, dev: 0, tir: false };
+  }
+  const edge2 = prism.edges[r2.edgeIdx];
+  const N2 = edgeNormal(edge2.A, edge2.B, prism.centroid);
+  // At the exit face, the ray (inside) opposes the outward normal → -(ref1·N) > 0.
+  let cosI2 = -(ref1.dir.x * N2.x + ref1.dir.y * N2.y);
+  cosI2 = Math.max(-1, Math.min(1, cosI2));
+  const i2Ang = (Math.acos(Math.abs(cosI2)) * 180 / Math.PI);
+
+  const ref2 = refract(ref1.dir, N2, nGlass, nAir);
+  if (ref2.tir){
+    return { thetaIn, r1: r1Ang, i2: i2Ang, r2: NaN, dev: 0, tir: true };
+  }
+  // Refraction at exit:
+  const sinT2 = Math.sin(i2Ang * Math.PI / 180) * nGlass / nAir;
+  const r2Ang = (Math.asin(Math.max(-1, Math.min(1, sinT2))) * 180 / Math.PI);
+  // Deviation δ = (θ₁ - θ₁') + (θ₂' - θ₂).
+  // θ₂ is the internal incidence at the exit face; θ₂' is the external refraction.
+  const dev = (thetaIn - r1Ang) + (r2Ang - i2Ang);
+  return { thetaIn, r1: r1Ang, i2: i2Ang, r2: r2Ang, dev, tir: false };
+}
+
+// === Trace for rendering (returns segments). Mirrors traceForHud but as segments. ===
+function traceWavelengthForRender(origin, dir, prism, nGlass){
+  const nAir = 1.0;
+  const segs = [];
+  let curO = { ...origin };
+  let curD = { ...dir };
+  let inside = false;
+  let hops = 0;
+
+  while (hops < 8){
+    hops++;
+    const r = intersectRayWithPrism(curO, curD, prism);
+    if (!r){
+      // Draw to canvas edge.
+      const end = farEdge(curO, curD, cssW, cssH);
+      segs.push({ p0: curO, p1: end });
+      break;
+    }
+    const edge = prism.edges[r.edgeIdx];
+    const N = edgeNormal(edge.A, edge.B, prism.centroid);
+    const n1 = inside ? nGlass : nAir;
+    const n2 = inside ? nAir   : nGlass;
+    const ref = refract(curD, N, n1, n2);
+    segs.push({ p0: curO, p1: r.hit.point });
+    if (ref.tir){
+      // Reflect and stay on same side (or, if entering then TIR — unusual case;
+      // for an outer ray TIR doesn't apply — refract() handles entry case).
+      curO = r.hit.point;
+      curD = reflect(curD, N);
+      continue;
+    }
+    inside = !inside;
+    curO = r.hit.point;
+    curD = ref.dir;
+  }
+
+  return segs;
+}
+
+// =============================================================
+//  BOOT
+// =============================================================
+updateLabels();
+resize();
+frame();
+})();
+</script>
+</body>
+</html>
