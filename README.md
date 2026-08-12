@@ -11,7 +11,7 @@
 
 ## 🎬 라이브 데모
 
-> **👉 [https://optics-prism-lab.vercel.app/](https://optics-prism-lab.vercel.app/)** — 브라우저에서 바로 실행 (Canvas 2D, 60fps)
+> **👉 [https://sigco3111.github.io/optics-prism-lab/](https://sigco3111.github.io/optics-prism-lab/)** — 브라우저에서 바로 실행 (Canvas 2D, 60fps)
 
 | | |
 |---|---|
