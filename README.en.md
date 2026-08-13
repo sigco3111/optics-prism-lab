@@ -11,11 +11,11 @@ A 2D optics lab simulator. A triangular glass prism is placed in a dark room and
 
 ## 🎬 Live Demo
 
-> **👉 [https://optics-prism-lab.vercel.app/](https://optics-prism-lab.vercel.app/)** — Run directly in the browser (Canvas 2D, 60fps)
+> **👉 [https://sigco3111.github.io/optics-prism-lab/](https://sigco3111.github.io/optics-prism-lab/)** — Run directly in the browser (Canvas 2D, 60fps)
 
 | | |
 |---|---|
-| ![Demo](https://img.shields.io/badge/Live-Demo-7C3AED?style=for-the-badge&logo=vercel&logoColor=white) | [![Repo](https://img.shields.io/badge/GitHub-sigco3111%2Foptics--prism--lab-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sigco3111/optics-prism-lab) |
+| ![Demo](https://img.shields.io/badge/Live-Demo-222222?style=for-the-badge&logo=githubpages&logoColor=white) | [![Repo](https://img.shields.io/badge/GitHub-sigco3111%2Foptics--prism--lab-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sigco3111/optics-prism-lab) |
 | ![Status](https://img.shields.io/badge/Status-Live-22C55E?style=flat-square) | ![Stack](https://img.shields.io/badge/Stack-Vanilla_JS-F7DF1E?style=flat-square&logo=javascript&logoColor=black) |
 | ![License](https://img.shields.io/badge/License-MIT-F1C40F?style=flat-square) | ![Deps](https://img.shields.io/badge/Dependencies-0-9CA3AF?style=flat-square) |
 
@@ -71,7 +71,7 @@ Calculate ray-line intersections. For dispersion (rainbow), cast multiple rays
 
 ## 🚀 Quick Start
 
-### Option 1: Live demo (Vercel, easiest)
+### Option 1: Live demo (GitHub Pages, easiest)
 Open the URL in the "Live Demo" section above. Zero external deps, runs immediately.
 
 ### Option 2: Open directly in a browser
@@ -222,7 +222,7 @@ The original Implementation Advice suggested R/G/B 3-color rays, but RG / Indigo
 | Item | Value |
 |---|---|
 | **Local index.html** | 38,434 B |
-| **Vercel alias response** | HTTP 200 · 38,434 B (bit-perfect match) |
+| **GitHub Pages response** | HTTP 200 · 38,434 B (bit-perfect match) |
 | **Dependencies** | None (0 CDN scripts, 0 `<link>` tags) |
 | **Rendering** | Canvas 2D, 60fps (`requestAnimationFrame` loop) |
 | **Physics step** | Per-frame 7-band refraction computation |
@@ -236,7 +236,7 @@ The original Implementation Advice suggested R/G/B 3-color rays, but RG / Indigo
 |---|---|---|
 | Round 1 | 2026-07-09 06:54 | Coding-mission scaffolding — README + placeholder `index.html` |
 | Round 2 | 2026-07-09 09:35 | OpenCode implements full simulator (Snell's law + 7-band dispersion + HUD) |
-| Round 3 | 2026-07-09 10:00 | Vercel deployment + multi-layer README v1.0 (this file) |
+| Round 3 | 2026-07-09 10:00 | Initial deployment + multi-layer README v1.0 (this file) |
 
 ---
 

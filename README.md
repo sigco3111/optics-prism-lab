@@ -15,7 +15,7 @@
 
 | | |
 |---|---|
-| ![Demo](https://img.shields.io/badge/Live-Demo-7C3AED?style=for-the-badge&logo=vercel&logoColor=white) | [![Repo](https://img.shields.io/badge/GitHub-sigco3111%2Foptics--prism--lab-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sigco3111/optics-prism-lab) |
+| ![Demo](https://img.shields.io/badge/Live-Demo-222222?style=for-the-badge&logo=githubpages&logoColor=white) | [![Repo](https://img.shields.io/badge/GitHub-sigco3111%2Foptics--prism--lab-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sigco3111/optics-prism-lab) |
 | ![Status](https://img.shields.io/badge/Status-Live-22C55E?style=flat-square) | ![Stack](https://img.shields.io/badge/Stack-Vanilla_JS-F7DF1E?style=flat-square&logo=javascript&logoColor=black) |
 | ![License](https://img.shields.io/badge/License-MIT-F1C40F?style=flat-square) | ![Deps](https://img.shields.io/badge/Dependencies-0-9CA3AF?style=flat-square) |
 
@@ -71,7 +71,7 @@ Calculate ray-line intersections. For dispersion (rainbow), cast multiple rays
 
 ## 🚀 실행 방법
 
-### 방법 1: 라이브 데모 (Vercel, 가장 간단)
+### 방법 1: 라이브 데모 (GitHub Pages, 가장 간단)
 위 "라이브 데모" 섹션의 URL을 브라우저에서 열기. 외부 의존성 0개라 즉시 실행됩니다.
 
 ### 방법 2: 브라우저로 직접 열기
@@ -222,7 +222,7 @@ const WAVELENGTHS = [
 | 항목 | 값 |
 |---|---|
 | **로컬 index.html** | 38,434 B |
-| **Vercel alias 응답** | HTTP 200 · 38,434 B (bit-perfect match) |
+| **GitHub Pages 응답** | HTTP 200 · 38,434 B (bit-perfect match) |
 | **의존성** | 없음 (CDN script 0개, `<link>` 0개) |
 | **렌더링** | Canvas 2D, 60fps (requestAnimationFrame 루프) |
 | **물리 step** | 매 프레임 7-band 굴절 계산 |
@@ -236,7 +236,7 @@ const WAVELENGTHS = [
 |---|---|---|
 | 1차 | 2026-07-09 06:54 | 코딩미션 scaffolding — README + placeholder index.html |
 | 2차 | 2026-07-09 09:35 | OpenCode가 풀 시뮬레이터 본체 구현 (스넬 법칙 + 7-band 분산 + HUD) |
-| 3차 | 2026-07-09 10:00 | Vercel 배포 + README 다층 v1.0 (현재) |
+| 3차 | 2026-07-09 10:00 | 초기 배포 + README 다층 v1.0 (현재) |
 
 ---
 
